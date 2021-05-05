@@ -1,8 +1,8 @@
 /**************************************************************************
  *
- * Copyright 2014-2020 Valve Software
- * Copyright 2015-2020 Google Inc.
- * Copyright 2019-2020 LunarG, Inc.
+ * Copyright 2014-2021 Valve Software
+ * Copyright 2015-2021 Google Inc.
+ * Copyright 2019-2021 LunarG, Inc.
  * All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@
 #include <string.h>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <sstream>
 #include <string>
 #include <sys/stat.h>
@@ -91,10 +90,12 @@ string GetEnvironment(const char *variable) {
         fgets(value, 256, pPipe);
         pclose(pPipe);
 
-        // Make sure its not an empty line
-        if (strcspn(value, "\r\n") == 0) {
+        // Make sure its not an empty line and does not end in a newline
+        const auto str_len = strcspn(value, "\r\n");
+        if (str_len == 0) {
             return "";
         } else {
+            value[str_len] = '\0';
             return string(value);
         }
     } else {
@@ -117,16 +118,17 @@ VK_LAYER_EXPORT const SettingsFileInfo *GetLayerSettingsFileInfo() { return &lay
 // as a filename. If successful, return file handle, otherwise stdout
 VK_LAYER_EXPORT FILE *getLayerLogOutput(const char *option, const char *layer_name) {
     FILE *log_output = NULL;
-    if (!option || !strcmp("stdout", option))
+    if (!option || !strcmp("stdout", option)) {
         log_output = stdout;
-    else {
+    } else {
         log_output = fopen(option, "w");
         if (log_output == NULL) {
-            if (option)
+            if (option) {
                 std::cout << std::endl
                           << layer_name << " ERROR: Bad output filename specified: " << option << ". Writing to STDOUT instead"
                           << std::endl
                           << std::endl;
+            }
             log_output = stdout;
         }
     }
@@ -134,7 +136,7 @@ VK_LAYER_EXPORT FILE *getLayerLogOutput(const char *option, const char *layer_na
 }
 
 // Map option strings to flag enum values
-VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(string option, std::unordered_map<string, VkFlags> const &enum_data,
+VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(string option, layer_data::unordered_map<string, VkFlags> const &enum_data,
                                             uint32_t option_default) {
     VkDebugReportFlagsEXT flags = option_default;
     string option_list = layer_config.GetOption(option.c_str());
@@ -194,10 +196,11 @@ const char *ConfigFile::GetOption(const string &option) {
         ParseFile(settings_file.c_str());
     }
 
-    if ((it = value_map_.find(option)) == value_map_.end())
+    if ((it = value_map_.find(option)) == value_map_.end()) {
         return "";
-    else
+    } else {
         return it->second.c_str();
+    }
 }
 
 void ConfigFile::SetOption(const string &option, const string &val) {
