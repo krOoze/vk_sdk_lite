@@ -275,6 +275,11 @@ static VKAPI_ATTR void VKAPI_CALL StubCmdEndTransformFeedbackEXT(VkCommandBuffer
 static VKAPI_ATTR void VKAPI_CALL StubCmdBeginQueryIndexedEXT(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags, uint32_t index) {  };
 static VKAPI_ATTR void VKAPI_CALL StubCmdEndQueryIndexedEXT(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query, uint32_t index) {  };
 static VKAPI_ATTR void VKAPI_CALL StubCmdDrawIndirectByteCountEXT(VkCommandBuffer commandBuffer, uint32_t instanceCount, uint32_t firstInstance, VkBuffer counterBuffer, VkDeviceSize counterBufferOffset, uint32_t counterOffset, uint32_t vertexStride) {  };
+static VKAPI_ATTR VkResult VKAPI_CALL StubCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoNVX* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkCuModuleNVX* pModule) { return VK_SUCCESS; };
+static VKAPI_ATTR VkResult VKAPI_CALL StubCreateCuFunctionNVX(VkDevice device, const VkCuFunctionCreateInfoNVX* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkCuFunctionNVX* pFunction) { return VK_SUCCESS; };
+static VKAPI_ATTR void VKAPI_CALL StubDestroyCuModuleNVX(VkDevice device, VkCuModuleNVX module, const VkAllocationCallbacks* pAllocator) {  };
+static VKAPI_ATTR void VKAPI_CALL StubDestroyCuFunctionNVX(VkDevice device, VkCuFunctionNVX function, const VkAllocationCallbacks* pAllocator) {  };
+static VKAPI_ATTR void VKAPI_CALL StubCmdCuLaunchKernelNVX(VkCommandBuffer commandBuffer, const VkCuLaunchInfoNVX* pLaunchInfo) {  };
 static VKAPI_ATTR uint32_t VKAPI_CALL StubGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX* pInfo) { return 0; };
 static VKAPI_ATTR VkResult VKAPI_CALL StubGetImageViewAddressNVX(VkDevice device, VkImageView imageView, VkImageViewAddressPropertiesNVX* pProperties) { return VK_SUCCESS; };
 static VKAPI_ATTR void VKAPI_CALL StubCmdDrawIndirectCountAMD(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset, VkBuffer countBuffer, VkDeviceSize countBufferOffset, uint32_t maxDrawCount, uint32_t stride) {  };
@@ -418,6 +423,8 @@ static VKAPI_ATTR void VKAPI_CALL StubCmdExecuteGeneratedCommandsNV(VkCommandBuf
 static VKAPI_ATTR void VKAPI_CALL StubCmdBindPipelineShaderGroupNV(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline, uint32_t groupIndex) {  };
 static VKAPI_ATTR VkResult VKAPI_CALL StubCreateIndirectCommandsLayoutNV(VkDevice device, const VkIndirectCommandsLayoutCreateInfoNV* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkIndirectCommandsLayoutNV* pIndirectCommandsLayout) { return VK_SUCCESS; };
 static VKAPI_ATTR void VKAPI_CALL StubDestroyIndirectCommandsLayoutNV(VkDevice device, VkIndirectCommandsLayoutNV indirectCommandsLayout, const VkAllocationCallbacks* pAllocator) {  };
+static VKAPI_ATTR VkResult VKAPI_CALL StubAcquireDrmDisplayEXT(VkPhysicalDevice physicalDevice, int32_t drmFd, VkDisplayKHR display) { return VK_SUCCESS; };
+static VKAPI_ATTR VkResult VKAPI_CALL StubGetDrmDisplayEXT(VkPhysicalDevice physicalDevice, int32_t drmFd, uint32_t connectorId, VkDisplayKHR* display) { return VK_SUCCESS; };
 static VKAPI_ATTR VkResult VKAPI_CALL StubCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataSlotCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkPrivateDataSlotEXT* pPrivateDataSlot) { return VK_SUCCESS; };
 static VKAPI_ATTR void VKAPI_CALL StubDestroyPrivateDataSlotEXT(VkDevice device, VkPrivateDataSlotEXT privateDataSlot, const VkAllocationCallbacks* pAllocator) {  };
 static VKAPI_ATTR VkResult VKAPI_CALL StubSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlotEXT privateDataSlot, uint64_t data) { return VK_SUCCESS; };
@@ -460,6 +467,8 @@ static VKAPI_ATTR VkResult VKAPI_CALL StubCreateScreenSurfaceQNX(VkInstance inst
 static VKAPI_ATTR VkBool32 VKAPI_CALL StubGetPhysicalDeviceScreenPresentationSupportQNX(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, struct _screen_window* window) { return VK_FALSE; };
 #endif // VK_USE_PLATFORM_SCREEN_QNX
 static VKAPI_ATTR void                                    VKAPI_CALL StubCmdSetColorWriteEnableEXT(VkCommandBuffer       commandBuffer, uint32_t                                attachmentCount, const VkBool32*   pColorWriteEnables) {  };
+static VKAPI_ATTR void VKAPI_CALL StubCmdDrawMultiEXT(VkCommandBuffer commandBuffer, uint32_t drawCount, const VkMultiDrawInfoEXT* pVertexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride) {  };
+static VKAPI_ATTR void VKAPI_CALL StubCmdDrawMultiIndexedEXT(VkCommandBuffer commandBuffer, uint32_t drawCount, const VkMultiDrawIndexedInfoEXT* pIndexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride, const int32_t* pVertexOffset) {  };
 static VKAPI_ATTR VkResult VKAPI_CALL StubCreateAccelerationStructureKHR(VkDevice                                           device, const VkAccelerationStructureCreateInfoKHR*        pCreateInfo, const VkAllocationCallbacks*       pAllocator, VkAccelerationStructureKHR*                        pAccelerationStructure) { return VK_SUCCESS; };
 static VKAPI_ATTR void VKAPI_CALL StubDestroyAccelerationStructureKHR(VkDevice device, VkAccelerationStructureKHR accelerationStructure, const VkAllocationCallbacks* pAllocator) {  };
 static VKAPI_ATTR void VKAPI_CALL StubCmdBuildAccelerationStructuresKHR(VkCommandBuffer                                    commandBuffer, uint32_t infoCount, const VkAccelerationStructureBuildGeometryInfoKHR* pInfos, const VkAccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos) {  };
@@ -522,6 +531,7 @@ const layer_data::unordered_map<std::string, std::string> api_extension_map {
     {"vkCmdCopyImage2KHR", "VK_KHR_copy_commands2"},
     {"vkCmdCopyImageToBuffer2KHR", "VK_KHR_copy_commands2"},
     {"vkCmdCopyMemoryToAccelerationStructureKHR", "VK_KHR_acceleration_structure"},
+    {"vkCmdCuLaunchKernelNVX", "VK_NVX_binary_import"},
     {"vkCmdDebugMarkerBeginEXT", "VK_EXT_debug_marker"},
     {"vkCmdDebugMarkerEndEXT", "VK_EXT_debug_marker"},
     {"vkCmdDebugMarkerInsertEXT", "VK_EXT_debug_marker"},
@@ -538,6 +548,8 @@ const layer_data::unordered_map<std::string, std::string> api_extension_map {
     {"vkCmdDrawMeshTasksIndirectCountNV", "VK_NV_mesh_shader"},
     {"vkCmdDrawMeshTasksIndirectNV", "VK_NV_mesh_shader"},
     {"vkCmdDrawMeshTasksNV", "VK_NV_mesh_shader"},
+    {"vkCmdDrawMultiEXT", "VK_EXT_multi_draw"},
+    {"vkCmdDrawMultiIndexedEXT", "VK_EXT_multi_draw"},
     {"vkCmdEncodeVideoKHR", "VK_KHR_video_encode_queue"},
     {"vkCmdEndConditionalRenderingEXT", "VK_EXT_conditional_rendering"},
     {"vkCmdEndDebugUtilsLabelEXT", "VK_EXT_debug_utils"},
@@ -591,6 +603,7 @@ const layer_data::unordered_map<std::string, std::string> api_extension_map {
     {"vkCmdSetViewportShadingRatePaletteNV", "VK_NV_shading_rate_image"},
     {"vkCmdSetViewportWScalingNV", "VK_NV_clip_space_w_scaling"},
     {"vkCmdSetViewportWithCountEXT", "VK_EXT_extended_dynamic_state"},
+    {"vkCmdSubpassShadingHUAWEI", "VK_HUAWEI_subpass_shading"},
     {"vkCmdTraceRaysIndirectKHR", "VK_KHR_ray_tracing_pipeline"},
     {"vkCmdTraceRaysKHR", "VK_KHR_ray_tracing_pipeline"},
     {"vkCmdTraceRaysNV", "VK_NV_ray_tracing"},
@@ -606,6 +619,8 @@ const layer_data::unordered_map<std::string, std::string> api_extension_map {
     {"vkCopyMemoryToAccelerationStructureKHR", "VK_KHR_acceleration_structure"},
     {"vkCreateAccelerationStructureKHR", "VK_KHR_acceleration_structure"},
     {"vkCreateAccelerationStructureNV", "VK_NV_ray_tracing"},
+    {"vkCreateCuFunctionNVX", "VK_NVX_binary_import"},
+    {"vkCreateCuModuleNVX", "VK_NVX_binary_import"},
     {"vkCreateDeferredOperationKHR", "VK_KHR_deferred_host_operations"},
     {"vkCreateDescriptorUpdateTemplate", "VK_VERSION_1_1"},
     {"vkCreateDescriptorUpdateTemplateKHR", "VK_KHR_descriptor_update_template"},
@@ -627,6 +642,8 @@ const layer_data::unordered_map<std::string, std::string> api_extension_map {
     {"vkDeferredOperationJoinKHR", "VK_KHR_deferred_host_operations"},
     {"vkDestroyAccelerationStructureKHR", "VK_KHR_acceleration_structure"},
     {"vkDestroyAccelerationStructureNV", "VK_NV_ray_tracing"},
+    {"vkDestroyCuFunctionNVX", "VK_NVX_binary_import"},
+    {"vkDestroyCuModuleNVX", "VK_NVX_binary_import"},
     {"vkDestroyDeferredOperationKHR", "VK_KHR_deferred_host_operations"},
     {"vkDestroyDescriptorUpdateTemplate", "VK_VERSION_1_1"},
     {"vkDestroyDescriptorUpdateTemplateKHR", "VK_KHR_descriptor_update_template"},
@@ -703,6 +720,7 @@ const layer_data::unordered_map<std::string, std::string> api_extension_map {
     {"vkGetSemaphoreWin32HandleKHR", "VK_KHR_external_semaphore_win32"},
     {"vkGetSemaphoreZirconHandleFUCHSIA", "VK_FUCHSIA_external_semaphore"},
     {"vkGetShaderInfoAMD", "VK_AMD_shader_info"},
+    {"vkGetSubpassShadingMaxWorkgroupSizeHUAWEI", "VK_HUAWEI_subpass_shading"},
     {"vkGetSwapchainCounterEXT", "VK_EXT_display_control"},
     {"vkGetSwapchainImagesKHR", "VK_KHR_swapchain"},
     {"vkGetSwapchainStatusKHR", "VK_KHR_shared_presentable_image"},
@@ -1181,6 +1199,16 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     if (table->CmdEndQueryIndexedEXT == nullptr) { table->CmdEndQueryIndexedEXT = (PFN_vkCmdEndQueryIndexedEXT)StubCmdEndQueryIndexedEXT; }
     table->CmdDrawIndirectByteCountEXT = (PFN_vkCmdDrawIndirectByteCountEXT) gpa(device, "vkCmdDrawIndirectByteCountEXT");
     if (table->CmdDrawIndirectByteCountEXT == nullptr) { table->CmdDrawIndirectByteCountEXT = (PFN_vkCmdDrawIndirectByteCountEXT)StubCmdDrawIndirectByteCountEXT; }
+    table->CreateCuModuleNVX = (PFN_vkCreateCuModuleNVX) gpa(device, "vkCreateCuModuleNVX");
+    if (table->CreateCuModuleNVX == nullptr) { table->CreateCuModuleNVX = (PFN_vkCreateCuModuleNVX)StubCreateCuModuleNVX; }
+    table->CreateCuFunctionNVX = (PFN_vkCreateCuFunctionNVX) gpa(device, "vkCreateCuFunctionNVX");
+    if (table->CreateCuFunctionNVX == nullptr) { table->CreateCuFunctionNVX = (PFN_vkCreateCuFunctionNVX)StubCreateCuFunctionNVX; }
+    table->DestroyCuModuleNVX = (PFN_vkDestroyCuModuleNVX) gpa(device, "vkDestroyCuModuleNVX");
+    if (table->DestroyCuModuleNVX == nullptr) { table->DestroyCuModuleNVX = (PFN_vkDestroyCuModuleNVX)StubDestroyCuModuleNVX; }
+    table->DestroyCuFunctionNVX = (PFN_vkDestroyCuFunctionNVX) gpa(device, "vkDestroyCuFunctionNVX");
+    if (table->DestroyCuFunctionNVX == nullptr) { table->DestroyCuFunctionNVX = (PFN_vkDestroyCuFunctionNVX)StubDestroyCuFunctionNVX; }
+    table->CmdCuLaunchKernelNVX = (PFN_vkCmdCuLaunchKernelNVX) gpa(device, "vkCmdCuLaunchKernelNVX");
+    if (table->CmdCuLaunchKernelNVX == nullptr) { table->CmdCuLaunchKernelNVX = (PFN_vkCmdCuLaunchKernelNVX)StubCmdCuLaunchKernelNVX; }
     table->GetImageViewHandleNVX = (PFN_vkGetImageViewHandleNVX) gpa(device, "vkGetImageViewHandleNVX");
     if (table->GetImageViewHandleNVX == nullptr) { table->GetImageViewHandleNVX = (PFN_vkGetImageViewHandleNVX)StubGetImageViewHandleNVX; }
     table->GetImageViewAddressNVX = (PFN_vkGetImageViewAddressNVX) gpa(device, "vkGetImageViewAddressNVX");
@@ -1417,6 +1445,10 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     if (table->CmdSetPrimitiveRestartEnableEXT == nullptr) { table->CmdSetPrimitiveRestartEnableEXT = (PFN_vkCmdSetPrimitiveRestartEnableEXT)StubCmdSetPrimitiveRestartEnableEXT; }
     table->CmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT) gpa(device, "vkCmdSetColorWriteEnableEXT");
     if (table->CmdSetColorWriteEnableEXT == nullptr) { table->CmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)StubCmdSetColorWriteEnableEXT; }
+    table->CmdDrawMultiEXT = (PFN_vkCmdDrawMultiEXT) gpa(device, "vkCmdDrawMultiEXT");
+    if (table->CmdDrawMultiEXT == nullptr) { table->CmdDrawMultiEXT = (PFN_vkCmdDrawMultiEXT)StubCmdDrawMultiEXT; }
+    table->CmdDrawMultiIndexedEXT = (PFN_vkCmdDrawMultiIndexedEXT) gpa(device, "vkCmdDrawMultiIndexedEXT");
+    if (table->CmdDrawMultiIndexedEXT == nullptr) { table->CmdDrawMultiIndexedEXT = (PFN_vkCmdDrawMultiIndexedEXT)StubCmdDrawMultiIndexedEXT; }
     table->CreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR) gpa(device, "vkCreateAccelerationStructureKHR");
     if (table->CreateAccelerationStructureKHR == nullptr) { table->CreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR)StubCreateAccelerationStructureKHR; }
     table->DestroyAccelerationStructureKHR = (PFN_vkDestroyAccelerationStructureKHR) gpa(device, "vkDestroyAccelerationStructureKHR");
@@ -1677,6 +1709,10 @@ static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLay
 #endif // VK_USE_PLATFORM_WIN32_KHR
     table->CreateHeadlessSurfaceEXT = (PFN_vkCreateHeadlessSurfaceEXT) gpa(instance, "vkCreateHeadlessSurfaceEXT");
     if (table->CreateHeadlessSurfaceEXT == nullptr) { table->CreateHeadlessSurfaceEXT = (PFN_vkCreateHeadlessSurfaceEXT)StubCreateHeadlessSurfaceEXT; }
+    table->AcquireDrmDisplayEXT = (PFN_vkAcquireDrmDisplayEXT) gpa(instance, "vkAcquireDrmDisplayEXT");
+    if (table->AcquireDrmDisplayEXT == nullptr) { table->AcquireDrmDisplayEXT = (PFN_vkAcquireDrmDisplayEXT)StubAcquireDrmDisplayEXT; }
+    table->GetDrmDisplayEXT = (PFN_vkGetDrmDisplayEXT) gpa(instance, "vkGetDrmDisplayEXT");
+    if (table->GetDrmDisplayEXT == nullptr) { table->GetDrmDisplayEXT = (PFN_vkGetDrmDisplayEXT)StubGetDrmDisplayEXT; }
 #ifdef VK_USE_PLATFORM_WIN32_KHR
     table->AcquireWinrtDisplayNV = (PFN_vkAcquireWinrtDisplayNV) gpa(instance, "vkAcquireWinrtDisplayNV");
     if (table->AcquireWinrtDisplayNV == nullptr) { table->AcquireWinrtDisplayNV = (PFN_vkAcquireWinrtDisplayNV)StubAcquireWinrtDisplayNV; }
