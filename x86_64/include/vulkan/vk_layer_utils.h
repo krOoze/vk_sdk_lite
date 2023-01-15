@@ -1,6 +1,6 @@
-/* Copyright (c) 2015-2017, 2019-2021 The Khronos Group Inc.
- * Copyright (c) 2015-2017, 2019-2021 Valve Corporation
- * Copyright (c) 2015-2017, 2019-2021 LunarG, Inc.
+/* Copyright (c) 2015-2017, 2019-2022 The Khronos Group Inc.
+ * Copyright (c) 2015-2017, 2019-2022 Valve Corporation
+ * Copyright (c) 2015-2017, 2019-2022 LunarG, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,24 @@ VK_LAYER_EXPORT VkLayerDeviceCreateInfo *get_chain_info(const VkDeviceCreateInfo
 
 static inline bool IsPowerOfTwo(unsigned x) { return x && !(x & (x - 1)); }
 
+// Returns the 0-based index of the MSB, like the x86 bit scan reverse (bsr) instruction
+// Note: an input mask of 0 yields -1
+static inline int MostSignificantBit(uint32_t mask) {
+#if defined __GNUC__
+    return mask ? __builtin_clz(mask) ^ 31 : -1;
+#elif defined _MSC_VER
+    unsigned long bit_pos;
+    return _BitScanReverse(&bit_pos, mask) ? int(bit_pos) : -1;
+#else
+    for (int k = 31; k >= 0; --k) {
+        if (((mask >> k) & 1) != 0) {
+            return k;
+        }
+    }
+    return -1;
+#endif
+}
+
 static inline uint32_t SampleCountSize(VkSampleCountFlagBits sample_count) {
     uint32_t size = 0;
     switch (sample_count) {
@@ -187,6 +205,42 @@ static inline uint32_t SampleCountSize(VkSampleCountFlagBits sample_count) {
     return size;
 }
 
+static inline bool IsImageLayoutReadOnly(VkImageLayout layout) {
+    constexpr std::array read_only_layouts = {
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+    };
+    return std::any_of(read_only_layouts.begin(), read_only_layouts.end(),
+                       [layout](const VkImageLayout read_only_layout) { return layout == read_only_layout; });
+}
+
+static inline bool IsImageLayoutDepthReadOnly(VkImageLayout layout) {
+    constexpr std::array read_only_layouts = {
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+    };
+    return std::any_of(read_only_layouts.begin(), read_only_layouts.end(),
+                       [layout](const VkImageLayout read_only_layout) { return layout == read_only_layout; });
+}
+
+static inline bool IsImageLayoutStencilReadOnly(VkImageLayout layout) {
+    constexpr std::array read_only_layouts = {
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL,
+        VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+    };
+    return std::any_of(read_only_layouts.begin(), read_only_layouts.end(),
+                       [layout](const VkImageLayout read_only_layout) { return layout == read_only_layout; });
+}
+
 static inline bool IsIdentitySwizzle(VkComponentMapping components) {
     // clang-format off
     return (
@@ -198,10 +252,74 @@ static inline bool IsIdentitySwizzle(VkComponentMapping components) {
     // clang-format on
 }
 
+static inline uint32_t GetIndexAlignment(VkIndexType indexType) {
+    switch (indexType) {
+        case VK_INDEX_TYPE_UINT16:
+            return 2;
+        case VK_INDEX_TYPE_UINT32:
+            return 4;
+        case VK_INDEX_TYPE_UINT8_EXT:
+            return 1;
+        case VK_INDEX_TYPE_NONE_KHR:  // alias VK_INDEX_TYPE_NONE_NV
+            return 0;
+        default:
+            // Not a real index type. Express no alignment requirement here; we expect upper layer
+            // to have already picked up on the enum being nonsense.
+            return 1;
+    }
+}
+
+static inline uint32_t GetPlaneIndex(VkImageAspectFlags aspect) {
+    // Returns an out of bounds index on error
+    switch (aspect) {
+        case VK_IMAGE_ASPECT_PLANE_0_BIT:
+            return 0;
+            break;
+        case VK_IMAGE_ASPECT_PLANE_1_BIT:
+            return 1;
+            break;
+        case VK_IMAGE_ASPECT_PLANE_2_BIT:
+            return 2;
+            break;
+        default:
+            // If more than one plane bit is set, return error condition
+            return FORMAT_MAX_PLANES;
+            break;
+    }
+}
+
+// all "advanced blend operation" found in spec
+static inline bool IsAdvanceBlendOperation(const VkBlendOp blend_op) {
+    return (static_cast<int>(blend_op) >= VK_BLEND_OP_ZERO_EXT) && (static_cast<int>(blend_op) <= VK_BLEND_OP_BLUE_EXT);
+}
+
+// Helper for Dual-Source Blending
+static inline bool IsSecondaryColorInputBlendFactor(VkBlendFactor blend_factor) {
+    return (blend_factor == VK_BLEND_FACTOR_SRC1_COLOR || blend_factor == VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR ||
+            blend_factor == VK_BLEND_FACTOR_SRC1_ALPHA || blend_factor == VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA);
+}
+
+// Perform a zero-tolerant modulo operation
+static inline VkDeviceSize SafeModulo(VkDeviceSize dividend, VkDeviceSize divisor) {
+    VkDeviceSize result = 0;
+    if (divisor != 0) {
+        result = dividend % divisor;
+    }
+    return result;
+}
+
+static inline VkDeviceSize SafeDivision(VkDeviceSize dividend, VkDeviceSize divisor) {
+    VkDeviceSize result = 0;
+    if (divisor != 0) {
+        result = dividend / divisor;
+    }
+    return result;
+}
+
 extern "C" {
 #endif
 
-#define VK_LAYER_API_VERSION VK_MAKE_VERSION(1, 0, VK_HEADER_VERSION)
+#define VK_LAYER_API_VERSION VK_HEADER_VERSION_COMPLETE
 
 typedef enum VkStringErrorFlagBits {
     VK_STRING_ERROR_NONE = 0x00000000,
@@ -235,47 +353,25 @@ static inline int u_ffs(int val) {
 }
 #endif
 
-// Minimum Visual Studio 2015 Update 2, or libc++ with C++17
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190023918 && NTDDI_VERSION > NTDDI_WIN10_RS2 && \
-    (!defined(_LIBCPP_VERSION) || __cplusplus >= 201703)
+#ifdef __cplusplus
 #include <shared_mutex>
-#endif
 
-class ReadWriteLock {
-  private:
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190023918 && NTDDI_VERSION > NTDDI_WIN10_RS2 && \
-    (!defined(_LIBCPP_VERSION) || __cplusplus >= 201703)
-    typedef std::shared_mutex lock_t;
-#else
-    typedef std::mutex lock_t;
-#endif
+// Aliases to avoid excessive typing. We can't easily auto these away because
+// there are virtual methods in ValidationObject which return lock guards
+// and those cannot use return type deduction.
+typedef std::shared_lock<std::shared_mutex> ReadLockGuard;
+typedef std::unique_lock<std::shared_mutex> WriteLockGuard;
 
+// helper class for the very common case of getting and then locking a command buffer (or other state object)
+template <typename T, typename Guard>
+class LockedSharedPtr : public std::shared_ptr<T> {
   public:
-    void lock() { m_lock.lock(); }
-    bool try_lock() { return m_lock.try_lock(); }
-    void unlock() { m_lock.unlock(); }
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190023918 && NTDDI_VERSION > NTDDI_WIN10_RS2 && \
-    (!defined(_LIBCPP_VERSION) || __cplusplus >= 201703)
-    void lock_shared() { m_lock.lock_shared(); }
-    bool try_lock_shared() { return m_lock.try_lock_shared(); }
-    void unlock_shared() { m_lock.unlock_shared(); }
-#else
-    void lock_shared() { lock(); }
-    bool try_lock_shared() { return try_lock(); }
-    void unlock_shared() { unlock(); }
-#endif
-  private:
-    lock_t m_lock;
-};
+    LockedSharedPtr(std::shared_ptr<T> &&ptr, Guard &&guard) : std::shared_ptr<T>(std::move(ptr)), guard_(std::move(guard)) {}
+    LockedSharedPtr() : std::shared_ptr<T>(), guard_() {}
 
-#if defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190023918 && NTDDI_VERSION > NTDDI_WIN10_RS2 && \
-    (!defined(_LIBCPP_VERSION) || __cplusplus >= 201703)
-typedef std::shared_lock<ReadWriteLock> read_lock_guard_t;
-typedef std::unique_lock<ReadWriteLock> write_lock_guard_t;
-#else
-typedef std::unique_lock<ReadWriteLock> read_lock_guard_t;
-typedef std::unique_lock<ReadWriteLock> write_lock_guard_t;
-#endif
+  private:
+    Guard guard_;
+};
 
 // Limited concurrent_unordered_map that supports internally-synchronized
 // insert/erase/access. Splits locking across N buckets and uses shared_mutex
@@ -304,29 +400,31 @@ typedef std::unique_lock<ReadWriteLock> write_lock_guard_t;
 template <typename Key, typename T, int BUCKETSLOG2 = 2, typename Hash = layer_data::hash<Key>>
 class vl_concurrent_unordered_map {
   public:
-    void insert_or_assign(const Key &key, const T &value) {
+    template <typename... Args>
+    void insert_or_assign(const Key &key, Args &&...args) {
         uint32_t h = ConcurrentMapHashObject(key);
-        write_lock_guard_t lock(locks[h].lock);
-        maps[h][key] = value;
+        WriteLockGuard lock(locks[h].lock);
+        maps[h][key] = {std::forward<Args>(args)...};
     }
 
-    bool insert(const Key &key, const T &value) {
+    template <typename... Args>
+    bool insert(const Key &key, Args &&...args) {
         uint32_t h = ConcurrentMapHashObject(key);
-        write_lock_guard_t lock(locks[h].lock);
-        auto ret = maps[h].emplace(key, value);
+        WriteLockGuard lock(locks[h].lock);
+        auto ret = maps[h].emplace(key, std::forward<Args>(args)...);
         return ret.second;
     }
 
     // returns size_type
     size_t erase(const Key &key) {
         uint32_t h = ConcurrentMapHashObject(key);
-        write_lock_guard_t lock(locks[h].lock);
+        WriteLockGuard lock(locks[h].lock);
         return maps[h].erase(key);
     }
 
     bool contains(const Key &key) const {
         uint32_t h = ConcurrentMapHashObject(key);
-        read_lock_guard_t lock(locks[h].lock);
+        ReadLockGuard lock(locks[h].lock);
         return maps[h].count(key) != 0;
     }
 
@@ -356,10 +454,11 @@ class vl_concurrent_unordered_map {
     // find()/end() return a FindResult containing a copy of the value. For end(),
     // return a default value.
     FindResult end() const { return FindResult(false, T()); }
+    FindResult cend() const { return end(); }
 
     FindResult find(const Key &key) const {
         uint32_t h = ConcurrentMapHashObject(key);
-        read_lock_guard_t lock(locks[h].lock);
+        ReadLockGuard lock(locks[h].lock);
 
         auto itr = maps[h].find(key);
         bool found = itr != maps[h].end();
@@ -373,13 +472,13 @@ class vl_concurrent_unordered_map {
 
     FindResult pop(const Key &key) {
         uint32_t h = ConcurrentMapHashObject(key);
-        write_lock_guard_t lock(locks[h].lock);
+        WriteLockGuard lock(locks[h].lock);
 
         auto itr = maps[h].find(key);
         bool found = itr != maps[h].end();
 
         if (found) {
-            auto ret = std::move(FindResult(true, itr->second));
+            auto ret = FindResult(true, itr->second);
             maps[h].erase(itr);
             return ret;
         } else {
@@ -390,7 +489,7 @@ class vl_concurrent_unordered_map {
     std::vector<std::pair<const Key, T>> snapshot(std::function<bool(T)> f = nullptr) const {
         std::vector<std::pair<const Key, T>> ret;
         for (int h = 0; h < BUCKETS; ++h) {
-            read_lock_guard_t lock(locks[h].lock);
+            ReadLockGuard lock(locks[h].lock);
             for (const auto &j : maps[h]) {
                 if (!f || f(j.second)) {
                     ret.emplace_back(j.first, j.second);
@@ -400,14 +499,39 @@ class vl_concurrent_unordered_map {
         return ret;
     }
 
+    void clear() {
+        for (int h = 0; h < BUCKETS; ++h) {
+            WriteLockGuard lock(locks[h].lock);
+            maps[h].clear();
+        }
+    }
+
+    size_t size() const {
+        size_t result = 0;
+        for (int h = 0; h < BUCKETS; ++h) {
+            ReadLockGuard lock(locks[h].lock);
+            result += maps[h].size();
+        }
+        return result;
+    }
+
+    bool empty() const {
+        bool result = 0;
+        for (int h = 0; h < BUCKETS; ++h) {
+            ReadLockGuard lock(locks[h].lock);
+            result |= maps[h].empty();
+        }
+        return result;
+    }
+
   private:
     static const int BUCKETS = (1 << BUCKETSLOG2);
 
     layer_data::unordered_map<Key, T, Hash> maps[BUCKETS];
     struct {
-        mutable ReadWriteLock lock;
+        mutable std::shared_mutex lock;
         // Put each lock on its own cache line to avoid false cache line sharing.
-        char padding[(-int(sizeof(ReadWriteLock))) & 63];
+        char padding[(-int(sizeof(std::shared_mutex))) & 63];
     } locks[BUCKETS];
 
     uint32_t ConcurrentMapHashObject(const Key &object) const {
@@ -418,3 +542,4 @@ class vl_concurrent_unordered_map {
         return hash;
     }
 };
+#endif

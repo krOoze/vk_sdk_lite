@@ -1,6 +1,6 @@
-/* Copyright (c) 2015-2021 The Khronos Group Inc.
- * Copyright (c) 2015-2021 Valve Corporation
- * Copyright (c) 2015-2021 LunarG, Inc.
+/* Copyright (c) 2015-2022 The Khronos Group Inc.
+ * Copyright (c) 2015-2022 Valve Corporation
+ * Copyright (c) 2015-2022 LunarG, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 #define SECONDARY_VK_REGISTRY_HIVE_STR "HKEY_CURRENT_USER"
 #endif
 
-std::string GetEnvironment(const char *variable);
+VK_LAYER_EXPORT std::string GetEnvironment(const char *variable);
 
 #ifdef __cplusplus
 extern "C" {
@@ -99,7 +99,8 @@ VK_LAYER_EXPORT const char *GetLayerEnvVar(const char *option);
 VK_LAYER_EXPORT const SettingsFileInfo *GetLayerSettingsFileInfo();
 
 VK_LAYER_EXPORT FILE *getLayerLogOutput(const char *option, const char *layer_name);
-VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(std::string option, layer_data::unordered_map<std::string, VkFlags> const &enum_data,
+VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(const std::string &option,
+                                            layer_data::unordered_map<std::string, VkFlags> const &enum_data,
                                             uint32_t option_default);
 
 VK_LAYER_EXPORT void setLayerOption(const char *option, const char *val);

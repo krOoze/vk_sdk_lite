@@ -1,8 +1,8 @@
 /**************************************************************************
  *
- * Copyright 2014-2021 Valve Software
- * Copyright 2015-2021 Google Inc.
- * Copyright 2019-2021 LunarG, Inc.
+ * Copyright 2014-2022 Valve Software
+ * Copyright 2015-2022 Google Inc.
+ * Copyright 2019-2022 LunarG, Inc.
  * All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +32,6 @@
 #include <sys/stat.h>
 
 #include <vulkan/vk_layer.h>
-// sdk_platform header redefines NOMINMAX
-#undef NOMINMAX
-#include <vulkan/vk_sdk_platform.h>
 #include "vk_layer_utils.h"
 
 #if defined(_WIN32)
@@ -68,7 +65,7 @@ class ConfigFile {
 
 static ConfigFile layer_config;
 
-string GetEnvironment(const char *variable) {
+VK_LAYER_EXPORT std::string GetEnvironment(const char *variable) {
 #if !defined(__ANDROID__) && !defined(_WIN32)
     const char *output = getenv(variable);
     return output == NULL ? "" : output;
@@ -108,8 +105,11 @@ string GetEnvironment(const char *variable) {
 
 VK_LAYER_EXPORT const char *getLayerOption(const char *option) { return layer_config.GetOption(option); }
 VK_LAYER_EXPORT const char *GetLayerEnvVar(const char *option) {
-    layer_config.vk_layer_disables_env_var = GetEnvironment(option);
-    return layer_config.vk_layer_disables_env_var.c_str();
+    // NOTE: new code should use GetEnvironment directly. This is a workaround for the problem
+    // described in https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/3048
+    static std::string result;
+    result = GetEnvironment(option);
+    return result.c_str();
 }
 
 VK_LAYER_EXPORT const SettingsFileInfo *GetLayerSettingsFileInfo() { return &layer_config.settings_info; }
@@ -136,14 +136,14 @@ VK_LAYER_EXPORT FILE *getLayerLogOutput(const char *option, const char *layer_na
 }
 
 // Map option strings to flag enum values
-VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(string option, layer_data::unordered_map<string, VkFlags> const &enum_data,
+VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(const string &option, layer_data::unordered_map<string, VkFlags> const &enum_data,
                                             uint32_t option_default) {
     VkDebugReportFlagsEXT flags = option_default;
     string option_list = layer_config.GetOption(option.c_str());
 
     while (option_list.length() != 0) {
         // Find length of option string
-        std::size_t option_length = option_list.find(",");
+        std::size_t option_length = option_list.find(',');
         if (option_length == option_list.npos) {
             option_length = option_list.size();
         }
@@ -159,12 +159,12 @@ VK_LAYER_EXPORT VkFlags GetLayerOptionFlags(string option, layer_data::unordered
         // Remove first option from option_list
         option_list.erase(0, option_length);
         // Remove possible comma separator
-        std::size_t char_position = option_list.find(",");
+        std::size_t char_position = option_list.find(',');
         if (char_position == 0) {
             option_list.erase(char_position, 1);
         }
         // Remove possible space
-        char_position = option_list.find(" ");
+        char_position = option_list.find(' ');
         if (char_position == 0) {
             option_list.erase(char_position, 1);
         }
@@ -187,6 +187,7 @@ ConfigFile::ConfigFile() : file_is_parsed_(false) {
     value_map_["khronos_validation.debug_action"] = "VK_DBG_LAYER_ACTION_DEFAULT,VK_DBG_LAYER_ACTION_LOG_MSG";
 #endif  // WIN32
     value_map_["khronos_validation.log_filename"] = "stdout";
+    value_map_["khronos_validation.fine_grained_locking"] = "true";
 }
 
 const char *ConfigFile::GetOption(const string &option) {

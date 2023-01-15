@@ -1,6 +1,6 @@
-/* Copyright (c) 2015-2021 The Khronos Group Inc.
- * Copyright (c) 2015-2021 Valve Corporation
- * Copyright (c) 2015-2021 LunarG, Inc.
+/* Copyright (c) 2015-2022 The Khronos Group Inc.
+ * Copyright (c) 2015-2022 Valve Corporation
+ * Copyright (c) 2015-2022 LunarG, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,15 @@
 #include <vector>
 #include <utility>
 #include <cstring>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <debugapi.h>
+#endif
 
 #include "vk_typemap_helper.h"
 #include "vk_layer_config.h"
 #include "vk_layer_data.h"
-#include "vk_loader_platform.h"
+#include "vulkan/vk_platform.h"
 #include "vulkan/vk_layer.h"
 #include "vk_object_types.h"
 #include "vk_enum_string_helper.h"
@@ -53,17 +57,10 @@
 #include "vk_safe_struct.h"
 #include "xxhash.h"
 
-// Suppress unused warning on Linux
-#if defined(__GNUC__)
-#define DECORATE_UNUSED __attribute__((unused))
-#else
-#define DECORATE_UNUSED
-#endif
-
 #if defined __ANDROID__
 #include <android/log.h>
 #define LOGCONSOLE(...) ((void)__android_log_print(ANDROID_LOG_INFO, "VALIDATION", __VA_ARGS__))
-static const char DECORATE_UNUSED *kForceDefaultCallbackKey = "debug.vvl.forcelayerlog";
+[[maybe_unused]] static const char *kForceDefaultCallbackKey = "debug.vvl.forcelayerlog";
 #else
 #define LOGCONSOLE(...)      \
     {                        \
@@ -72,9 +69,7 @@ static const char DECORATE_UNUSED *kForceDefaultCallbackKey = "debug.vvl.forcela
     }
 #endif
 
-static const char DECORATE_UNUSED *kVUIDUndefined = "VUID_Undefined";
-
-#undef DECORATE_UNUSED
+[[maybe_unused]] static const char *kVUIDUndefined = "VUID_Undefined";
 
 typedef enum DebugCallbackStatusBits {
     DEBUG_CALLBACK_UTILS = 0x00000001,     // This struct describes a VK_EXT_debug_utils callback
@@ -96,6 +91,11 @@ struct LogObjectList {
     template <typename HANDLE_T>
     LogObjectList(HANDLE_T object) {
         add(object);
+    }
+
+    template <typename... HANDLE_T>
+    LogObjectList(HANDLE_T... objects) {
+        (..., add(objects));
     }
 
     LogObjectList(){};
@@ -363,6 +363,11 @@ static inline bool debug_log_msg(const debug_report_data *debug_data, VkFlags ms
     VkDebugUtilsMessageSeverityFlagsEXT severity;
     DebugReportFlagsToAnnotFlags(msg_flags, true, &severity, &types);
 
+    std::vector<std::string> object_labels;
+    // Ensures that push_back will not reallocate, thereby providing pointer
+    // stability for pushed strings.
+    object_labels.reserve(objects.object_list.size());
+
     std::vector<VkDebugUtilsObjectNameInfoEXT> object_name_info;
     object_name_info.resize(objects.object_list.size());
     for (uint32_t i = 0; i < objects.object_list.size(); i++) {
@@ -378,9 +383,8 @@ static inline bool debug_log_msg(const debug_report_data *debug_data, VkFlags ms
             object_label = debug_data->DebugReportGetMarkerObjectName(objects.object_list[i].handle);
         }
         if (!object_label.empty()) {
-            char *local_obj_name = new char[object_label.length() + 1];
-            std::strcpy(local_obj_name, object_label.c_str());
-            object_name_info[i].pObjectName = local_obj_name;
+            object_labels.push_back(std::move(object_label));
+            object_name_info[i].pObjectName = object_labels.back().c_str();
         }
 
         // If this is a queue, add any queue labels to the callback data.
@@ -663,7 +667,7 @@ static inline bool LogMsgEnabled(const debug_report_data *debug_data, const std:
         return false;
     }
     // If message is in filter list, bail out very early
-    uint32_t message_id = XXH32(vuid_text.c_str(), strlen(vuid_text.c_str()), 8);
+    const uint32_t message_id = XXH32(vuid_text.data(), vuid_text.size(), 8);
     if (std::find(debug_data->filter_message_ids.begin(), debug_data->filter_message_ids.end(), message_id)
         != debug_data->filter_message_ids.end()) {
         return false;
